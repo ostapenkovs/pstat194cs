@@ -1,0 +1,72 @@
+---
+title: "Final Project"
+author: "Vasiliy Ostapenko"
+date: "5/17/2022"
+output: pdf_document
+---
+
+```{r setup, echo=FALSE, include=FALSE}
+library(tidyverse)
+library(data.table)
+knitr::opts_chunk$set(fig.width=6, fig.height=3, 
+                      warning=FALSE, message=FALSE)
+options(digits=4)
+```
+
+## DATA
+### Load Data
+```{r}
+df = read.csv("./data/bee_data.csv")
+```
+
+### Analysis
+```{r}
+mod = glm(formula=Ratio ~ IT, family="gaussian", data=df)
+summary(mod)
+```
+```{r}
+lev = hatvalues(mod)
+
+n = nrow(df)
+p = 3
+dat = data.frame(index=seq(length(lev)), leverage=lev)
+plot(leverage~index, col="white", data=dat, pch=NULL, ylim=c(0, 0.3))
+text(leverage~index, labels=index, data=dat, cex=0.9, font=2)
+abline(h=(p+1)/n, col="blue")
+abline(h=3*(p+1)/n, col="red", lty=2)
+```
+```{r}
+d = cooks.distance(mod)
+
+dat2 = data.frame(index=seq(length(d)), cooks=d)
+plot(cooks~index, col="white", data=dat2, pch=NULL)
+text(cooks~index, labels=index, data=dat2, cex=0.9, font=2)
+abline(h=4/n, col="red", lty=2)
+```
+```{r}
+mod2 = glm(formula=Ratio ~ IT, family="gaussian", data=df[-c(11, 16, 25, 29), ])
+summary(mod2)
+```
+```{r}
+par(mfrow=c(1, 2))
+{
+  {
+    plot(Ratio~IT, data=df, col="white", pch=NULL,
+         xlim=c(0, 8), ylim=c(0.10, 0.20))
+    text(Ratio~IT, labels=rownames(df), data=df, 
+         cex=0.9, font=2)
+    lines(x=df$IT, y=predict(mod, df))
+  }
+  {
+    plot(Ratio~IT, data=df[-c(11, 16, 25, 29), ], col="white", pch=NULL,
+         xlim=c(0, 8), ylim=c(0.10, 0.20))
+    text(Ratio~IT, labels=rownames(df[-c(11, 16, 25, 29), ]), data=df[-c(11, 16, 25, 29), ], 
+         cex=0.9, font=2)
+    lines(x=df[-c(11, 16, 25, 29), ]$IT, y=predict(mod2, df[-c(11, 16, 25, 29), ]))
+  }
+}
+```
+```{r}
+print(paste0("mod R2: ", round(1 - mod$deviance/mod$null.deviance, 3)))
+print(paste0("mod2 R2: ", round(1 - mod2$deviance/mod2$null.deviance, 3)))
+```

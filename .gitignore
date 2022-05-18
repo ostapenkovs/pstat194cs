@@ -1,0 +1,9 @@
+.ipynb_checkpoints
+.RHistory
+.RData
+.DS_Store
+*.html
+*.zip
+
+194csSolns.pdf
+194csText.pdf
