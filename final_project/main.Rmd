@@ -8,6 +8,8 @@ output: pdf_document
 ```{r setup, echo=FALSE, include=FALSE}
 library(tidyverse)
 library(data.table)
+library(boot)
+library(MASS)
 knitr::opts_chunk$set(fig.width=6, fig.height=3, 
                       warning=FALSE, message=FALSE)
 options(digits=4)
@@ -17,6 +19,7 @@ options(digits=4)
 ### Load Data
 ```{r}
 df = read.csv("./data/bee_data.csv")
+df$Ratio = 100 * df$Ratio
 ```
 
 ### Analysis
@@ -52,14 +55,14 @@ par(mfrow=c(1, 2))
 {
   {
     plot(Ratio~IT, data=df, col="white", pch=NULL,
-         xlim=c(0, 8), ylim=c(0.10, 0.20))
+         xlim=c(0, 8), ylim=c(10, 20))
     text(Ratio~IT, labels=rownames(df), data=df, 
          cex=0.9, font=2)
     lines(x=df$IT, y=predict(mod, df))
   }
   {
     plot(Ratio~IT, data=df[-c(11, 16, 25, 29), ], col="white", pch=NULL,
-         xlim=c(0, 8), ylim=c(0.10, 0.20))
+         xlim=c(0, 8), ylim=c(10, 20))
     text(Ratio~IT, labels=rownames(df[-c(11, 16, 25, 29), ]), data=df[-c(11, 16, 25, 29), ], 
          cex=0.9, font=2)
     lines(x=df[-c(11, 16, 25, 29), ]$IT, y=predict(mod2, df[-c(11, 16, 25, 29), ]))
@@ -69,4 +72,24 @@ par(mfrow=c(1, 2))
 ```{r}
 print(paste0("mod R2: ", round(1 - mod$deviance/mod$null.deviance, 3)))
 print(paste0("mod2 R2: ", round(1 - mod2$deviance/mod2$null.deviance, 3)))
+```
+
+## BOOTSTRAPPING
+```{r}
+nboot = 10000
+bres = matrix(NA, nrow=nboot, ncol=length(coef(mod)), 
+             dimnames=list(rep=seq(nboot), coef=names(coef(mod))))
+```
+```{r}
+bootsize = 12
+for(i in seq(nboot)) {
+  bdat = df[sample(nrow(df), size=bootsize, replace=TRUE), ]
+  bfit = update(mod, data=bdat)
+  bres[i, ] = coef(bfit)
+}
+```
+```{r}
+bdf = data.frame(mean_est=colMeans(bres), 
+                 t(apply(bres, 2, quantile, c(0.025,0.975))))
+bdf
 ```
