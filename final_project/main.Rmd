@@ -1,8 +1,16 @@
 ---
-title: "Final Project"
-author: "Vasiliy Ostapenko"
-date: "5/17/2022"
-output: pdf_document
+title: |
+  | PSTAT 194CS Final Project
+  | Monte Carlo Bootstrapping
+author: |
+  | Ostapenko, Vasiliy (vostapenko, 774 970 8)
+  | Collaborated with: Arthur Starodynov, Jake Bentley
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    theme: readable
+    toc: yes
 ---
 
 ```{r setup, echo=FALSE, include=FALSE}
@@ -77,19 +85,25 @@ print(paste0("mod2 R2: ", round(1 - mod2$deviance/mod2$null.deviance, 3)))
 ## BOOTSTRAPPING
 ```{r}
 nboot = 10000
-bres = matrix(NA, nrow=nboot, ncol=length(coef(mod)), 
-             dimnames=list(rep=seq(nboot), coef=names(coef(mod))))
-```
-```{r}
+b0_estimates = vector(mode="numeric", length=nboot)
+b1_estimates = vector(mode="numeric", length=nboot)
+
 bootsize = 12
 for(i in seq(nboot)) {
   bdat = df[sample(nrow(df), size=bootsize, replace=TRUE), ]
   bfit = update(mod, data=bdat)
-  bres[i, ] = coef(bfit)
+  b0_estimates[i] = coef(bfit)[[1]]
+  b1_estimates[i] = coef(bfit)[[2]]
 }
+
+res = data.frame(list(b0=b0_estimates, b1=b1_estimates))
 ```
 ```{r}
-bdf = data.frame(mean_est=colMeans(bres), 
-                 t(apply(bres, 2, quantile, c(0.025,0.975))))
-bdf
+print(paste0("b0 (intercept) 95% CI: [ ", 
+             round(mean(res$b0) - 1.96*sd(res$b0), 3), ", ",
+             round(mean(res$b0) + 1.96*sd(res$b0), 3), " ]"))
+
+print(paste0("b1 (IT) 95% CI: [ ", 
+             round(mean(res$b1) - 1.96*sd(res$b1), 3), ", ",
+             round(mean(res$b1) + 1.96*sd(res$b1), 3), " ]"))
 ```
