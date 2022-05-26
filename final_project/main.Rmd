@@ -84,26 +84,36 @@ print(paste0("mod2 R2: ", round(1 - mod2$deviance/mod2$null.deviance, 3)))
 
 ## BOOTSTRAPPING
 ```{r}
-nboot = 10000
-b0_estimates = vector(mode="numeric", length=nboot)
-b1_estimates = vector(mode="numeric", length=nboot)
-
-bootsize = 12
-for(i in seq(nboot)) {
-  bdat = df[sample(nrow(df), size=bootsize, replace=TRUE), ]
-  bfit = update(mod, data=bdat)
-  b0_estimates[i] = coef(bfit)[[1]]
-  b1_estimates[i] = coef(bfit)[[2]]
+boot_sim = function(nboot=10000, bootsizes=c(15, 20, 25, 30)) {
+  container = list()
+  j = 1
+  for(bootsize in bootsizes) {
+    b0_estimates = vector(mode="numeric", length=nboot)
+    b1_estimates = vector(mode="numeric", length=nboot)
+    for(i in seq(nboot)) {
+      bdat = df[sample(nrow(df), size=bootsize, replace=TRUE), ]
+      bfit = update(mod, data=bdat)
+      b0_estimates[i] = coef(bfit)[[1]]
+      b1_estimates[i] = coef(bfit)[[2]]
+    }
+    results = list(size=bootsize, 
+                   b0_mu=mean(b0_estimates), b0_se=sd(b0_estimates), 
+                   b1_mu=mean(b1_estimates), b1_se=sd(b1_estimates))
+    container[[j]] = results
+    j = j+1
+  }
+  container = rbindlist(container)
+  return(container)
 }
 
-res = data.frame(list(b0=b0_estimates, b1=b1_estimates))
+data = boot_sim()
 ```
 ```{r}
-print(paste0("b0 (intercept) 95% CI: [ ", 
-             round(mean(res$b0) - 1.96*sd(res$b0), 3), ", ",
-             round(mean(res$b0) + 1.96*sd(res$b0), 3), " ]"))
+p = ggplot(data, aes(size, b1_mu)) +
+  geom_point() +
+  geom_errorbar(aes(ymin=b1_mu-1.96*b1_se, ymax=b1_mu+1.96*b1_se)) +
+  geom_hline(yintercept=0, col="red") +
+  labs(y="95% CI for b1 (IT)", x="Sample Size")
 
-print(paste0("b1 (IT) 95% CI: [ ", 
-             round(mean(res$b1) - 1.96*sd(res$b1), 3), ", ",
-             round(mean(res$b1) + 1.96*sd(res$b1), 3), " ]"))
+p
 ```
