@@ -1,7 +1,7 @@
 ---
 title: |
   | PSTAT 194CS Final Project
-  | Monte Carlo Bootstrapping
+  | Bootstrapping and MCMC
 author: |
   | Ostapenko, Vasiliy (vostapenko, 774 970 8)
   | Collaborated with: Arthur Starodynov, Jake Bentley
@@ -116,4 +116,86 @@ p = ggplot(data, aes(size, b1_mu)) +
   labs(y="95% CI for b1 (IT)", x="Sample Size")
 
 p
+```
+
+## MCMC
+```{r, warning=FALSE}
+prior_probability = function(beta) {
+  a = beta[1]
+  b = beta[2]
+  return(log(a)+log(b))
+}
+
+likelihood_probability = function(beta, x, y) {
+  a = beta[1]
+  b = beta[2]
+  y_predict = a+b*x
+  single_likelihoods = dnorm(x=y, mean=y_predict, sd=3.0)
+  return(sum(log(single_likelihoods)))
+}
+
+posterior_probability = function(beta, x, y) {
+  return( likelihood_probability(beta, x, y) + prior_probability(beta) )
+}
+
+proposal_function = function(beta) {
+  a = beta[1]
+  b = beta[2]
+  a_new = rnorm(n=1, mean=a, sd=0.5)
+  b_new = rnorm(n=1, mean=b, sd=0.5)
+  beta_new = c(a_new, b_new)
+  return(beta_new)
+}
+
+mcmc_sim = function(x, y, n=10000) {
+  container = data.frame(b0=vector(mode="numeric", length=n),
+                         b1=vector(mode="numeric", length=n))
+  
+  # randomly initialize beta vector
+  beta_0 = c(0.5, 0.5)
+  container[1, ] = beta_0
+  
+  # loop n times
+  for(step in 2:n) {
+    beta_old = as.numeric(container[step-1, ])
+    beta_proposal = proposal_function(beta_old)
+    
+    # restore from log numbers
+    prob = exp(posterior_probability(beta_proposal, x, y) -
+                 posterior_probability(beta_old, x, y))
+    
+    u = runif(n=1, min=0, max=1)
+    
+    if(is.na(u < prob)) {
+      container[step, ] = beta_old
+    }
+    else {
+      if(u < prob) {
+        # jump
+        container[step, ] = beta_proposal
+      }
+      else {
+        # stay
+        container[step, ] = beta_old
+      }
+    }
+  }
+  return(container)
+}
+
+data2 = mcmc_sim(x=df$IT, y=df$Ratio, n=10000)
+```
+```{r}
+burn_in = 2000
+beta_posterior = data2[burn_in:nrow(data2), ]
+print(paste0("b0 estimate: ", round(mean(beta_posterior$b0), 3), 
+             "; b1 estimate: ",
+             round(mean(beta_posterior$b1), 3)))
+```
+```{r}
+{
+  hist(beta_posterior$b1, breaks=30, freq=FALSE, xlab="", 
+       main=paste0("Distribution of b1"))
+  abline(v=mean(beta_posterior$b1), col="red", lwd=1.5)
+}
 ```
