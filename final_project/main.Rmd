@@ -123,7 +123,9 @@ p
 prior_probability = function(beta) {
   a = beta[1]
   b = beta[2]
-  return(log(a)+log(b))
+  a_prior = dunif(a, min=0, max=30)
+  b_prior = dunif(b, min=0, max=1)
+  return(log(a_prior)+log(b_prior))
 }
 
 likelihood_probability = function(beta, x, y) {
