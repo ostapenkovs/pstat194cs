@@ -30,7 +30,7 @@ options(digits=4)
   - [Link 3](https://en.wikipedia.org/wiki/Linear_regression)
 
 ## Abstract
-In this paper, we use Monte Carlo methods for parameter estimation in the context of a linear regression model of bee wing vein density on bee body size. Concretely, we use a dataset of 48 bee samples, fit a simple linear regression model to estimate b1, and then compare that estimate with those obtained from bootstrapping and Markov chain Monte Carlo, respectively. We are interested in this analysis because we seek to determine whether the slope parameter for the model is significant (nonzero). We first obtained an OLS estimate for b1, which was nonzero. We then used Monte Carlo resampling (bootstrapping) with varying sample sizes to build several confidence intervals for b1. Finally, using MCMC, we built another sampling distribution of b1. We found that, with a large enough sample size, both Monte Carlo methods produced estimates which were significant (nonzero), agreeing with the OLS estimate. These results matter, because we now know that we have significant impact on the response from the predictor variable.
+In this paper, we use Monte Carlo methods for parameter estimation in the context of a linear regression model of bee wing vein density on bee body size. Concretely, we use a dataset of 48 bee samples, fit a simple linear regression model (y = b0 + b1*x) to estimate b1 (the slope), and then compare that estimate with those obtained from bootstrapping and Markov chain Monte Carlo, respectively. We are interested in this analysis because we seek to determine whether the slope parameter for the model is significant (nonzero). We first obtained an OLS estimate for b1, which was nonzero. We then used Monte Carlo resampling (bootstrapping) with varying sample sizes to build several confidence intervals for b1. Finally, using MCMC, we built another sampling distribution of b1. We found that, with a large enough sample size, both Monte Carlo methods produced estimates which were significant (nonzero), agreeing with the OLS estimate. These results matter, because we now know that we have significant impact on the response from the predictor variable.
 
 ## Introduction
 The motivation for this project came from wanting to extend the research of a fellow UCSB student, whose dataset we used. In his studies, he collected 48 bee samples, observing both categorical and numeric parameters. He then fit a simple linear regression model of vein density on body size, hypothesizing that there was a linear relationship between the two variables. The resulting low R-squared made us question whether there was indeed a significant relationship. Being in a computational statistics course, we wanted to move beyond a t-test for slope or a nested model F-test, and thus chose two Monte Carlo methods for estimating the slope parameter. In particular, we were acutely interested in whether it is significant (nonzero).
@@ -67,8 +67,8 @@ text(cooks~index, labels=index, data=dat2, cex=0.9, font=2)
 abline(h=4/n, col="red", lty=2)
 ```
 ```{r}
+# simple OLS fit to data without outliers
 mod2 = glm(formula=Ratio ~ IT, family="gaussian", data=df[-c(11, 16, 25, 29), ])
-summary(mod2) # simple OLS fit to data without outliers
 ```
 ```{r}
 par(mfrow=c(1, 2))
